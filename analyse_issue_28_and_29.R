@@ -1,12 +1,12 @@
 # Analysis of:
 #
+# * (0. Functions needed for the analysis)
 # * 1. NMSE
 # * 2. Genotype concordance
 # * 3. Runtime
 #
-
 ################################################################################
-# * 1. NMSE
+# * 0. Functions needed for the analysis
 ################################################################################
 issue_to_n_markers <- function(issues) {
   markers <- issues
@@ -18,6 +18,9 @@ testthat::expect_equal(issue_to_n_markers(28), "one")
 testthat::expect_equal(issue_to_n_markers(29), "more")
 testthat::expect_identical(issue_to_n_markers(c(28, 29)), c("one", "more"))
 
+################################################################################
+# * 1. NMSE
+################################################################################
 if (nchar("analysis_about_nsme")) {
   nmse_in_time_filenames_table <- tibble::tibble(
     filename = c(
@@ -138,6 +141,3 @@ if (nchar("analysis_about_runtime")) {
     p
   ggplot2::ggsave(filename = "runtime_hours_28_and_29_1_plot.png", plot = p, width = 7, height = 7)
 }
-
-
-25_run_issue_28_1000.log
