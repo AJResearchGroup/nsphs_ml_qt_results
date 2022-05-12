@@ -9,11 +9,27 @@ Results for nsphs_ml_qt.
 A measure of how well the genotypes are compressed,
 which is a value from 0 (worst) to 1 (best).
 
-![](genotype_concordance_28_and_29_1_plot.png)
+#### p0
+
+`p0` is an overly simple phenotype model
+
+![](genotype_concordance_28_and_29_1_plot_p0.png)
 
 > Genotype concordance in one plot
 
-![](genotype_concordance_28_and_29_facet_grid.png)
+![](genotype_concordance_28_and_29_facet_grid_p0.png)
+
+> Genotype concordance in a facet grid
+
+### p1
+
+`p1` is a useful phenotype model
+
+![](genotype_concordance_28_and_29_1_plot_p1.png)
+
+> Genotype concordance in one plot
+
+![](genotype_concordance_28_and_29_facet_grid_p1.png)
 
 > Genotype concordance in a facet grid
 
@@ -22,11 +38,27 @@ which is a value from 0 (worst) to 1 (best).
 A measure of the error in phenotype prediction,
 which is a value from 0 (perfect prediction) to infinity (useless prediction).
 
-![](nmse_28_and_29_1_plot.png)
+#### `p0`
+
+`p0` is an overly simple phenotype model
+
+![](nmse_28_and_29_1_plot_p0.png)
 
 > Normalized mean squared error in one plot
 
-![](nmse_28_and_29_facet_grid.png)
+![](nmse_28_and_29_facet_grid_p0.png)
+
+> Normalized mean squared error in a facet grid
+
+#### `p1`
+
+`p1` is a useful phenotype model
+
+![](nmse_28_and_29_1_plot_p1.png)
+
+> Normalized mean squared error in one plot
+
+![](nmse_28_and_29_facet_grid_p1.png)
 
 > Normalized mean squared error in a facet grid
 
