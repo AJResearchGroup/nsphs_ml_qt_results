@@ -18,14 +18,26 @@ testthat::expect_equal(issue_to_n_markers(28), "one")
 testthat::expect_equal(issue_to_n_markers(29), "more")
 testthat::expect_identical(issue_to_n_markers(c(28, 29)), c("one", "more"))
 
+folder_names <- rep("", 4)
+i <- 1
+for (issue in c(28, 29)) {
+  for (phenotype_model in c(0, 1)) {
+    folder_names[i] <- file.path(
+      paste0("issue_", issue, "_1000_epochs_p", phenotype_model)
+    )
+    i <- i + 1
+  }
+}
+testthat::expect_true(all(dir.exists(folder_names)))
+testthat::expect_identical(unique(folder_names), folder_names)
+
 ################################################################################
 # * 1. NMSE
 ################################################################################
 if (nchar("analysis_about_nsme")) {
   nmse_in_time_filenames_table <- tibble::tibble(
     filename = c(
-      list.files("issue_28", pattern = "nmse_in_time.csv", recursive = TRUE, full.names = TRUE),
-      list.files("issue_29", pattern = "nmse_in_time.csv", recursive = TRUE, full.names = TRUE)
+      list.files(folder_names, pattern = "nmse_in_time.csv", recursive = TRUE, full.names = TRUE)
     )
   )
   nmse_in_times_list <- list()
@@ -36,24 +48,37 @@ if (nchar("analysis_about_nsme")) {
     )
     matches <- stringr::str_match(
       nmse_in_time_filename,
-      "data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
+      "issue_([[:digit:]]{2})_1000_epochs_p([[:digit:]]{1})/data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
     )
-    t$n_markers <- issue_to_n_markers(as.numeric(matches[1, 2]))
-    t$window_kb <- as.numeric(matches[1, 3])
+    testthat::expect_true(!is.na(matches)[1][1])
+    testthat::expect_equal(matches[1, 2], matches[1, 4])
+    issue <- matches[1, 2]
+    t$n_markers <- issue_to_n_markers(as.numeric(issue))
+    t$phenotype_model <- as.numeric(matches[1, 3])
+    t$window_kb <- as.numeric(matches[1, 5])
     nmse_in_times_list[[row_index]] <- t
   }
   nmse_in_times_table <- dplyr::bind_rows(nmse_in_times_list)
   nmse_in_times_table$n_markers <- as.factor(nmse_in_times_table$n_markers)
   nmse_in_times_table$window_kb <- as.factor(nmse_in_times_table$window_kb)
 
-  p <- ggplot2::ggplot(
-    data = nmse_in_times_table,
-    ggplot2::aes(x = epoch, y = nmse, color = window_kb, lty = n_markers)
-  ) + ggplot2::geom_line() + ggplot2::scale_y_log10()
-  ggplot2::ggsave(filename = "nmse_28_and_29_1_plot.png", plot = p, width = 7, height = 7)
+  for (phenotype_model_index in c(0, 1)) {
+    p <- ggplot2::ggplot(
+      data = dplyr::filter(nmse_in_times_table, phenotype_model == phenotype_model_index),
+      ggplot2::aes(x = epoch, y = nmse, color = window_kb, lty = n_markers)
+    ) + ggplot2::geom_line() + ggplot2::scale_y_log10()
+    ggplot2::ggsave(
+      filename = paste0("nmse_28_and_29_1_plot_p", phenotype_model_index,".png"),
+      plot = p, width = 7, height = 7)
+    p
 
-  q <- p + ggplot2::facet_grid(n_markers ~ window_kb)
-  ggplot2::ggsave(filename = "nmse_28_and_29_facet_grid.png", plot = q, width = 7, height = 7)
+    q <- p + ggplot2::facet_grid(n_markers ~ window_kb)
+    ggplot2::ggsave(
+      filename = paste0("nmse_28_and_29_facet_grid.png_p", phenotype_model_index,".png"),
+      plot = q, width = 7, height = 7
+    )
+    q
+  }
 
 }
 ################################################################################
@@ -61,8 +86,7 @@ if (nchar("analysis_about_nsme")) {
 ################################################################################
 if (nchar("analysis_about_genotype_concordances")) {
   all_genotype_concordances_filenames <- c(
-    list.files("issue_28", pattern = "genotype_concordances.csv", recursive = TRUE, full.names = TRUE),
-    list.files("issue_29", pattern = "genotype_concordances.csv", recursive = TRUE, full.names = TRUE)
+    list.files(folder_names, pattern = "genotype_concordances.csv", recursive = TRUE, full.names = TRUE)
   )
   # GCAE also stores a file called genotype_concordances
   genotype_concordances_filenames <- stringr::str_subset(
@@ -81,34 +105,44 @@ if (nchar("analysis_about_genotype_concordances")) {
     )
     matches <- stringr::str_match(
       genotype_concordances_filename,
-      "data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
+      "issue_([[:digit:]]{2})_1000_epochs_p([[:digit:]]{1})/data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
     )
-    t$n_markers <- issue_to_n_markers(as.numeric(matches[1, 2]))
-    t$window_kb <- as.numeric(matches[1, 3])
+    testthat::expect_true(!is.na(matches)[1][1])
+    testthat::expect_equal(matches[1, 2], matches[1, 4])
+    issue <- matches[1, 2]
+    t$n_markers <- issue_to_n_markers(as.numeric(issue))
+    t$phenotype_model <- as.numeric(matches[1, 3])
+    t$window_kb <- as.numeric(matches[1, 5])
     genotype_concordancess_list[[row_index]] <- t
   }
   genotype_concordancess_table <- dplyr::bind_rows(genotype_concordancess_list)
   genotype_concordancess_table$n_markers <- as.factor(genotype_concordancess_table$n_markers)
   genotype_concordancess_table$window_kb <- as.factor(genotype_concordancess_table$window_kb)
 
-  p <- ggplot2::ggplot(
-    data = genotype_concordancess_table,
-    ggplot2::aes(x = epoch, y = genotype_concordance, color = window_kb, lty = n_markers)
-  ) + ggplot2::geom_line()
-  p
-  ggplot2::ggsave(filename = "genotype_concordance_28_and_29_1_plot.png", plot = p, width = 7, height = 7)
-  q
-  q <- p + ggplot2::facet_grid(n_markers ~ window_kb)
-  ggplot2::ggsave(filename = "genotype_concordance_28_and_29_facet_grid.png", plot = q, width = 7, height = 7)
-
+  for (phenotype_model_index in c(0, 1)) {
+    p <- ggplot2::ggplot(
+      data = dplyr::filter(genotype_concordancess_table, phenotype_model == phenotype_model_index),
+      ggplot2::aes(x = epoch, y = genotype_concordance, color = window_kb, lty = n_markers)
+    ) + ggplot2::geom_line()
+    p
+    ggplot2::ggsave(
+      filename = paste0("genotype_concordance_28_and_29_1_plot_p", phenotype_model_index,".png"),
+      plot = p, width = 7, height = 7
+    )
+    q <- p + ggplot2::facet_grid(n_markers ~ window_kb)
+    q
+    ggplot2::ggsave(
+      filename = paste0("genotype_concordance_28_and_29_facet_grid_p", phenotype_model_index, ".png"),
+      plot = q, width = 7, height = 7
+    )
+  }
 }
 ################################################################################
 # * 3. Runtime
 ################################################################################
 if (nchar("analysis_about_runtime")) {
   all_log_filenames <- c(
-    list.files("issue_28", pattern = ".log", recursive = TRUE, full.names = TRUE),
-    list.files("issue_29", pattern = ".log", recursive = TRUE, full.names = TRUE)
+    list.files(folder_names, pattern = ".log", recursive = TRUE, full.names = TRUE)
   )
   t <- tibble::tibble(
     filename = stringr::str_subset(all_log_filenames, "25_")
