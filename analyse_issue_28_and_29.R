@@ -171,7 +171,9 @@ if (nchar("analysis_about_runtime")) {
     ggplot2::scale_x_log10() +
     ggplot2::scale_y_log10() +
     ggplot2::geom_smooth(method = "lm", se = FALSE, lty = "dashed") +
-    ggplot2::geom_smooth(method = "lm", formula = y ~ x + I(x^2),  se = FALSE, lty = "dashed")
-    p
+    ggplot2::geom_smooth(
+      method = "lm", formula = y ~ x + I(x^2),  se = FALSE, lty = "dashed"
+    )
+  p
   ggplot2::ggsave(filename = "runtime_hours_28_and_29_1_plot.png", plot = p, width = 7, height = 7)
 }
