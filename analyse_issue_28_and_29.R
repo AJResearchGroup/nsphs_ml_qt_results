@@ -67,14 +67,18 @@ if (nchar("analysis_about_nsme")) {
       data = dplyr::filter(nmse_in_times_table, phenotype_model == phenotype_model_index),
       ggplot2::aes(x = epoch, y = nmse, color = window_kb, lty = n_markers)
     ) + ggplot2::geom_line() + ggplot2::scale_y_log10()
+
+    testthat::expect_equal(1, length(phenotype_model_index))
+    png_filename <- paste0("nmse_28_and_29_1_plot_p", phenotype_model_index,".png")
+    message(png_filename)
     ggplot2::ggsave(
-      filename = paste0("nmse_28_and_29_1_plot_p", phenotype_model_index,".png"),
+      filename = png_filename,
       plot = p, width = 7, height = 7)
     p
 
     q <- p + ggplot2::facet_grid(n_markers ~ window_kb)
     ggplot2::ggsave(
-      filename = paste0("nmse_28_and_29_facet_grid.png_p", phenotype_model_index,".png"),
+      filename = paste0("nmse_28_and_29_facet_grid_p", phenotype_model_index,".png"),
       plot = q, width = 7, height = 7
     )
     q
