@@ -69,4 +69,6 @@ ggplot2::ggplot(
   ggplot2::scale_y_log10()
 
 knitr::kable(t[order(t$genotype_concordance, decreasing = TRUE), ])
-knitr::kable(t[order(t$nmse, decreasing = TRUE), ])
+knitr::kable(t[order(t$nmse, decreasing = FALSE), ])
+
+knitr::kable(t |> dplyr::filter(model_id == "M1" & pheno_model_id == "p1"))
