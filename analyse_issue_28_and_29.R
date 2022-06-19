@@ -18,16 +18,7 @@ testthat::expect_equal(issue_to_n_markers(28), "one")
 testthat::expect_equal(issue_to_n_markers(29), "more")
 testthat::expect_identical(issue_to_n_markers(c(28, 29)), c("one", "more"))
 
-folder_names <- rep("", 4)
-i <- 1
-for (issue in c(28, 29)) {
-  for (phenotype_model in c(0, 1)) {
-    folder_names[i] <- file.path(
-      paste0("issue_", issue, "_1000_epochs_p", phenotype_model)
-    )
-    i <- i + 1
-  }
-}
+folder_names <- paste0("issue_", c(28, 29), "_1000_epochs_p1_m3d")
 testthat::expect_true(all(dir.exists(folder_names)))
 testthat::expect_identical(unique(folder_names), folder_names)
 
@@ -180,4 +171,60 @@ if (nchar("analysis_about_runtime")) {
     )
   p
   ggplot2::ggsave(filename = "runtime_hours_28_and_29_1_plot.png", plot = p, width = 7, height = 7)
+}
+
+################################################################################
+# * 4. R sqaured
+################################################################################
+if (nchar("analysis_about_nsme")) {
+  r_squared_in_time_filenames_table <- tibble::tibble(
+    filename = c(
+      list.files(folder_names, pattern = "r_squared_in_time.csv", recursive = TRUE, full.names = TRUE)
+    )
+  )
+  r_squared_in_times_list <- list()
+  for (row_index in seq_len(nrow(r_squared_in_time_filenames_table))) {
+    r_squared_in_time_filename <- r_squared_in_time_filenames_table$filename[row_index]
+    t <- gcaer::read_r_squared_in_time_file(
+      r_squared_in_time_filename = r_squared_in_time_filename
+    )
+    matches <- stringr::str_match(
+      r_squared_in_time_filename,
+      "issue_([[:digit:]]{2})_1000_epochs_p([[:digit:]]{1})_m3d/data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
+    )
+    testthat::expect_true(!is.na(matches)[1][1])
+    testthat::expect_equal(matches[1, 2], matches[1, 4])
+    issue <- matches[1, 2]
+    t$n_markers <- issue_to_n_markers(as.numeric(issue))
+    t$phenotype_model <- as.numeric(matches[1, 3])
+    t$window_kb <- as.numeric(matches[1, 5])
+    r_squared_in_times_list[[row_index]] <- t
+  }
+  r_squared_in_times_table <- dplyr::bind_rows(r_squared_in_times_list)
+  r_squared_in_times_table$n_markers <- as.factor(r_squared_in_times_table$n_markers)
+  r_squared_in_times_table$window_kb <- as.factor(r_squared_in_times_table$window_kb)
+
+  p <- ggplot2::ggplot(
+    data = r_squared_in_times_table,
+    ggplot2::aes(x = epoch, y = r_squared, color = window_kb, lty = n_markers)
+  ) + ggplot2::geom_line() +
+    ggplot2::scale_y_continuous(
+      name = "r_squared",
+      limits = c(0, 1)
+    )
+  p
+  testthat::expect_equal(1, length(phenotype_model_index))
+  png_filename <- paste0("r_squared_28_and_29_1_plot_p1.png")
+  message(png_filename)
+  ggplot2::ggsave(
+    filename = png_filename,
+    plot = p, width = 7, height = 7)
+  p
+
+  q <- p + ggplot2::facet_grid(n_markers ~ window_kb)
+  ggplot2::ggsave(
+    filename = paste0("r_squared_28_and_29_facet_grid_p1.png"),
+    plot = q, width = 7, height = 7
+  )
+  q
 }
