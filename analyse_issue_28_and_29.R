@@ -221,7 +221,18 @@ if (nchar("analysis_about_nsme")) {
     plot = p, width = 7, height = 7)
   p
 
-  q <- p + ggplot2::facet_grid(n_markers ~ window_kb)
+  q <- p + ggplot2::facet_grid(n_markers ~ window_kb) +
+  ggplot2::labs(
+    title = "R squared per SNP selection window for different SNPs",
+    caption = paste0(
+      "'one' is the SNP selection window centered around rs12126142,\n",
+      "the main hit of IL-6RA (CVD3_142_IL-6RA)\n",
+      "'more' is the SNP selection window centered around rs4819959,\n",
+      "the main hit of IL-17RA (panel CVD3_105_IL-17RA), \n",
+      "which has 6 other SNPs around it"
+    )
+  )
+  q
   ggplot2::ggsave(
     filename = paste0("r_squared_28_and_29_facet_grid_p1.png"),
     plot = q, width = 7, height = 7
