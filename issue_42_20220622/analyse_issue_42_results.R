@@ -200,9 +200,9 @@ t_last_genotype_concordances_in_time <- dplyr::filter(
 t_last_genotype_concordances_in_time$genetic_data <- as.factor(t_last_genotype_concordances_in_time$genetic_data)
 ggplot2::ggplot(
   t_last_genotype_concordances_in_time,
-  ggplot2::aes(x = 1, y = genotype_concordance, fill = genetic_data)
+  ggplot2::aes(x = genetic_data, y = genotype_concordance, fill = genetic_data, color = genetic_data)
 ) + ggplot2::geom_boxplot() +
-  ggplot2::scale_x_continuous(name = "") +
+  ggplot2::scale_x_discrete(name = "", drop = FALSE) +
   ggplot2::scale_y_continuous(limits = c(0, 1)) +
   ggplot2::facet_grid(model_id ~ pheno_model_id) +
   gcaer::get_gcaer_theme() +
