@@ -90,41 +90,58 @@ ggplot2::ggplot(
   )
 ggplot2::ggsave(filename = "issue_42_genotype_concordances_in_time.png", width = 7, height = 7)
 
-
-###
-### OLD
-###
-t <- tidyr::expand_grid(
-  model_id = model_ids_that_work,
-  pheno_model_id = pheno_model_ids_that_work,
-  window_kb = window_kbs_that_work,
-  genotype_concordance = NA,
-  nmse = NA,
-  r_squared = NA
-)
-for (row_index in seq_len(nrow(t))) {
-  message(row_index)
-  model_id <- t$model_id[row_index]
-  pheno_model_id <- t$pheno_model_id[row_index]
-  window_kb <- t$window_kb[row_index]
-  folder_name <- paste0(
-    "data_issue_42_", model_id,
-    "_", pheno_model_id, "_", window_kb,
-    "_ae"
+#############################################################################
+# NMSE in time
+#############################################################################
+nmse_in_time_list <- list()
+for (i in seq_len(nrow(t_combinations))) {
+  this_row <- t_combinations[i, ]
+  filename <- file.path(
+    this_row$folder_name,
+    "nmse_in_time.csv"
   )
-  if (!dir.exists(folder_name)) next
-  testthat::expect_true(dir.exists(folder_name))
-
-  # GC
-  filename <- file.path(folder_name, "genotype_concordances.csv")
   if (!file.exists(filename)) {
-    message(filename)
+    message(filename, " does not exist")
     next
   }
-  testthat::expect_true(file.exists(filename))
-  t$genotype_concordance[row_index] <- tail(
-    gcaer::read_genotype_concordances_file(filename), n = 1
-  )$genotype_concordance
+  t_nmses_in_time <- gcaer::read_nmse_in_time_file(
+    filename
+  )
+  t_nmses_in_time$model_id <- this_row$model_id
+  t_nmses_in_time$pheno_model_id <- this_row$pheno_model_id
+  t_nmses_in_time$window_kb <- this_row$window_kb
+  nmse_in_time_list[[i]] <- t_nmses_in_time
+}
+t_nmses_in_time <- dplyr::bind_rows(nmse_in_time_list)
+
+window_kb_to_data <- function(window_kb) {
+  if (window_kb == 1) return("1 kb, 2 SNPs")
+  if (window_kb == 10) return("10 kb, 5 SNPs")
+  if (window_kb == 100) return("100 kb, 5 SNPs")
+  if (window_kb == 1000) return("1000 kb, 6 SNPs")
+  stop("Unknown 'window_kb': ", window_kb)
+}
+
+t_nmses_in_time$genetic_data <- Vectorize(window_kb_to_data)(t_nmses_in_time$window_kb)
+
+ggplot2::ggplot(
+  t_nmses_in_time,
+  ggplot2::aes(x = epoch, y = nmse, color = genetic_data)
+) + ggplot2::geom_line(size = 1) +
+  ggplot2::scale_y_continuous(limits = c(0, 2), oob = scales::squish) +
+  ggplot2::scale_x_continuous(breaks = seq(0, 1000, by = 200)) +
+  ggplot2::facet_grid(model_id ~ pheno_model_id) +
+  gcaer::get_gcaer_theme() +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),
+    panel.border = ggplot2::element_rect(colour = "black", fill = "transparent")
+  )
+ggplot2::ggsave(filename = "issue_42_nmses_in_time.png", width = 7, height = 7)
+
+
+
+
+
 
   # NMSE
   filename <- file.path(folder_name, "nmse_in_time.csv")
