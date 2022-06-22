@@ -1,3 +1,6 @@
+#############################################################################
+# General setup
+#############################################################################
 all_root_folders <- list.dirs(recursive = FALSE)
 all_folders <- list.dirs(recursive = TRUE)
 
@@ -14,6 +17,24 @@ testthat::expect_equal(2, length(pheno_model_ids_that_work))
 window_kbs_that_work <- unique(sort(matches[, 4]))
 testthat::expect_equal(4, length(window_kbs_that_work))
 
+#############################################################################
+# Helper functions
+#############################################################################
+window_kb_to_data <- function(window_kb) {
+  if (window_kb == 1) return("1 kb, 2 SNPs")
+  if (window_kb == 10) return("10 kb, 5 SNPs")
+  if (window_kb == 100) return("100 kb, 5 SNPs")
+  if (window_kb == 1000) return("1000 kb, 6 SNPs")
+  stop("Unknown 'window_kb': ", window_kb)
+}
+
+testthat::expect_true(stringr::str_detect(window_kb_to_data(1), "2 SNPs"))
+testthat::expect_true(stringr::str_detect(window_kb_to_data(10), "5 SNPs"))
+testthat::expect_true(stringr::str_detect(window_kb_to_data(100), "5 SNPs"))
+testthat::expect_true(stringr::str_detect(window_kb_to_data(1000), "6 SNPs"))
+
+#############################################################################
+# Get all combinations
 #############################################################################
 t_combinations <- tidyr::expand_grid(
   model_id = model_ids_that_work,
@@ -66,13 +87,6 @@ for (i in seq_len(nrow(t_combinations))) {
 }
 t_genotype_concordances_in_time <- dplyr::bind_rows(genotype_concordance_in_time_list)
 
-window_kb_to_data <- function(window_kb) {
-  if (window_kb == 1) return("1 kb, 2 SNPs")
-  if (window_kb == 10) return("10 kb, 5 SNPs")
-  if (window_kb == 100) return("100 kb, 5 SNPs")
-  if (window_kb == 1000) return("1000 kb, 6 SNPs")
-  stop("Unknown 'window_kb': ", window_kb)
-}
 
 t_genotype_concordances_in_time$genetic_data <- Vectorize(window_kb_to_data)(t_genotype_concordances_in_time$window_kb)
 
@@ -113,14 +127,6 @@ for (i in seq_len(nrow(t_combinations))) {
   nmse_in_time_list[[i]] <- t_nmses_in_time
 }
 t_nmses_in_time <- dplyr::bind_rows(nmse_in_time_list)
-
-window_kb_to_data <- function(window_kb) {
-  if (window_kb == 1) return("1 kb, 2 SNPs")
-  if (window_kb == 10) return("10 kb, 5 SNPs")
-  if (window_kb == 100) return("100 kb, 5 SNPs")
-  if (window_kb == 1000) return("1000 kb, 6 SNPs")
-  stop("Unknown 'window_kb': ", window_kb)
-}
 
 t_nmses_in_time$genetic_data <- Vectorize(window_kb_to_data)(t_nmses_in_time$window_kb)
 
@@ -163,14 +169,6 @@ for (i in seq_len(nrow(t_combinations))) {
 }
 t_r_squareds_in_time <- dplyr::bind_rows(r_squared_in_time_list)
 
-window_kb_to_data <- function(window_kb) {
-  if (window_kb == 1) return("1 kb, 2 SNPs")
-  if (window_kb == 10) return("10 kb, 5 SNPs")
-  if (window_kb == 100) return("100 kb, 5 SNPs")
-  if (window_kb == 1000) return("1000 kb, 6 SNPs")
-  stop("Unknown 'window_kb': ", window_kb)
-}
-
 t_r_squareds_in_time$genetic_data <- Vectorize(window_kb_to_data)(t_r_squareds_in_time$window_kb)
 
 ggplot2::ggplot(
@@ -188,6 +186,58 @@ ggplot2::ggplot(
 ggplot2::ggsave(filename = "issue_42_r_squareds_in_time.png", width = 7, height = 7)
 
 
+
+#############################################################################
+# last genotype_concordance in time
+#############################################################################
+all_epochs <- sort(unique(t_genotype_concordances_in_time$epoch))
+top_epochs <- all_epochs[all_epochs > max(all_epochs) * 0.89]
+
+t_last_genotype_concordances_in_time <- dplyr::filter(
+  t_genotype_concordances_in_time,
+  epoch %in% top_epochs
+)
+t_last_genotype_concordances_in_time$genetic_data <- as.factor(t_last_genotype_concordances_in_time$genetic_data)
+ggplot2::ggplot(
+  t_last_genotype_concordances_in_time,
+  ggplot2::aes(x = 1, y = genotype_concordance, fill = genetic_data)
+) + ggplot2::geom_boxplot() +
+  ggplot2::scale_x_continuous(name = "") +
+  ggplot2::scale_y_continuous(limits = c(0, 1)) +
+  ggplot2::facet_grid(model_id ~ pheno_model_id) +
+  gcaer::get_gcaer_theme() +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_blank(),
+    panel.border = ggplot2::element_rect(colour = "black", fill = "transparent")
+  )
+
+ggplot2::ggsave(filename = "issue_42_genotype_concordances_at_end.png", width = 7, height = 7)
+
+#############################################################################
+# last nmse in time
+#############################################################################
+all_epochs <- sort(unique(t_nmses_in_time$epoch))
+top_epochs <- all_epochs[all_epochs > max(all_epochs) * 0.89]
+
+t_last_nmses_in_time <- dplyr::filter(
+  t_nmses_in_time,
+  epoch %in% top_epochs
+)
+t_last_nmses_in_time$genetic_data <- as.factor(t_last_nmses_in_time$genetic_data)
+ggplot2::ggplot(
+  t_last_nmses_in_time,
+  ggplot2::aes(x = 1, y = nmse, fill = genetic_data)
+) + ggplot2::geom_boxplot() +
+  ggplot2::scale_x_continuous(name = "") +
+  ggplot2::scale_y_continuous(limits = c(0, 2), oob = scales::squish) +
+  ggplot2::facet_grid(model_id ~ pheno_model_id) +
+  gcaer::get_gcaer_theme() +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_blank(),
+    panel.border = ggplot2::element_rect(colour = "black", fill = "transparent")
+  )
+
+ggplot2::ggsave(filename = "issue_42_nmses_at_end.png", width = 7, height = 7)
 
 #############################################################################
 # last r_squared in time
@@ -222,10 +272,7 @@ ggplot2::ggplot(
   gcaer::get_gcaer_theme() +
   ggplot2::theme(
     axis.text.x = ggplot2::element_blank(),
-    panel.border = ggplot2::element_rect(colour = "black", fill = "transparent"),
-    legend.position = "bottom"
-  ) + ggplot2::labs(
-    title = "Last 10% of all r_squareds\nper architecture"
+    panel.border = ggplot2::element_rect(colour = "black", fill = "transparent")
   )
 
 ggplot2::ggsave(filename = "issue_42_r_squareds_at_end.png", width = 7, height = 7)
