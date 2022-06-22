@@ -226,7 +226,7 @@ t_last_nmses_in_time <- dplyr::filter(
 t_last_nmses_in_time$genetic_data <- as.factor(t_last_nmses_in_time$genetic_data)
 ggplot2::ggplot(
   t_last_nmses_in_time,
-  ggplot2::aes(x = 1, y = nmse, fill = genetic_data)
+  ggplot2::aes(x = genetic_data, y = nmse, fill = genetic_data)
 ) + ggplot2::geom_boxplot() +
   ggplot2::scale_x_discrete(name = "", drop = FALSE) +
   ggplot2::scale_y_continuous(limits = c(0, 2), oob = scales::squish) +
@@ -264,7 +264,7 @@ if ("calculate averages" == "myself") {
 t_last_r_squareds_in_time$genetic_data <- as.factor(t_last_r_squareds_in_time$genetic_data)
 ggplot2::ggplot(
   t_last_r_squareds_in_time,
-  ggplot2::aes(x = 1, y = r_squared, fill = genetic_data)
+  ggplot2::aes(x = genetic_data, y = r_squared, fill = genetic_data)
 ) + ggplot2::geom_boxplot() +
   ggplot2::scale_x_discrete(name = "", drop = FALSE) +
   ggplot2::scale_y_continuous(limits = c(0, 1)) +
