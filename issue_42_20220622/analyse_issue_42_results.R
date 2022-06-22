@@ -139,105 +139,50 @@ ggplot2::ggplot(
 ggplot2::ggsave(filename = "issue_42_nmses_in_time.png", width = 7, height = 7)
 
 
-
-
-
-
-  # NMSE
-  filename <- file.path(folder_name, "nmse_in_time.csv")
+#############################################################################
+# r_squared in time
+#############################################################################
+r_squared_in_time_list <- list()
+for (i in seq_len(nrow(t_combinations))) {
+  this_row <- t_combinations[i, ]
+  filename <- file.path(
+    this_row$folder_name,
+    "r_squared_in_time.csv"
+  )
   if (!file.exists(filename)) {
-    message(filename)
+    message(filename, " does not exist")
     next
   }
-  testthat::expect_true(file.exists(filename))
-  t$nmse[row_index] <- tail(
-    gcaer::read_nmse_in_time_file(filename), n = 1
-  )$nmse
+  t_r_squareds_in_time <- gcaer::read_r_squared_in_time_file(
+    filename
+  )
+  t_r_squareds_in_time$model_id <- this_row$model_id
+  t_r_squareds_in_time$pheno_model_id <- this_row$pheno_model_id
+  t_r_squareds_in_time$window_kb <- this_row$window_kb
+  r_squared_in_time_list[[i]] <- t_r_squareds_in_time
+}
+t_r_squareds_in_time <- dplyr::bind_rows(r_squared_in_time_list)
 
-  # r_squared
-  filename <- file.path(folder_name, "r_squared_in_time.csv")
-  if (!file.exists(filename)) {
-    message(filename)
-    next
-  }
-  testthat::expect_true(file.exists(filename))
-  t$r_squared[row_index] <- tail(
-    gcaer::read_r_squared_in_time_file(filename), n = 1
-  )$r_squared
+window_kb_to_data <- function(window_kb) {
+  if (window_kb == 1) return("1 kb, 2 SNPs")
+  if (window_kb == 10) return("10 kb, 5 SNPs")
+  if (window_kb == 100) return("100 kb, 5 SNPs")
+  if (window_kb == 1000) return("1000 kb, 6 SNPs")
+  stop("Unknown 'window_kb': ", window_kb)
 }
 
-ggplot2::ggplot(
-  t, ggplot2::aes(x = model_id, y = genotype_concordance, fill = pheno_model_id)
-) + ggplot2::geom_col(color = "black", position = "dodge") +
-  ggplot2::facet_grid(window_kb ~ .) +
-  ggplot2::labs(
-    title = "Genotype concordance per model per SNP selection window",
-    caption = paste0(
-      "Rows are the SNP selection window centered around rs4819959, ",
-      "the main hit of IL-17RA (panel CVD3_105_IL-17RA)"
-    )
-  )
-ggplot2::ggsave(filename = "genotype_concordance_per_model_combination.png", width = 7, height = 7)
+t_r_squareds_in_time$genetic_data <- Vectorize(window_kb_to_data)(t_r_squareds_in_time$window_kb)
 
 ggplot2::ggplot(
-  t, ggplot2::aes(x = model_id, y = nmse, fill = pheno_model_id)
-) + ggplot2::scale_y_log10("log of NMSE (less is better)") +
-  ggplot2::geom_col(color = "black", position = "dodge") +
-  ggplot2::facet_grid(window_kb ~ .) +
-  ggplot2::labs(
-    title = "NMSE per model per SNP selection window",
-    caption = paste0(
-      "Rows are the SNP selection window centered around rs4819959, ",
-      "the main hit of IL-17RA (panel CVD3_105_IL-17RA)"
-    )
-  )
-ggplot2::ggsave(filename = "nmse_per_model_combination.png", width = 7, height = 7)
-
-ggplot2::ggplot(
-  t, ggplot2::aes(x = model_id, y = r_squared, fill = pheno_model_id)
-) + ggplot2::scale_y_continuous(limits = c(0, 1)) +
-  ggplot2::geom_col(color = "black", position = "dodge") +
-  ggplot2::facet_grid(window_kb ~ .) +
-  ggplot2::labs(
-    title = "R squared per model per SNP selection window",
-    caption = paste0(
-      "Rows are the SNP selection window centered around rs4819959, ",
-      "the main hit of IL-17RA (panel CVD3_105_IL-17RA)"
-    )
-  )
-ggplot2::ggsave(filename = "r_squared_per_model_combination.png", width = 7, height = 7)
-
-ggplot2::ggplot(
-  t, ggplot2::aes(x = genotype_concordance, y = nmse, color = model_id, shape = pheno_model_id)
-) + ggplot2::geom_point(size = 10) +
-  ggplot2::scale_y_log10() +
-  ggplot2::facet_grid(window_kb ~ .) +
-  ggplot2::labs(
-    title = "Genotype concordance versus NMSE per SNP selection window",
-    caption = paste0(
-      "Rows are the SNP selection window centered around rs4819959, ",
-      "the main hit of IL-17RA (panel CVD3_105_IL-17RA)"
-    )
-  )
-ggplot2::ggsave(filename = "genotype_concordance_to_nmse_per_model_combination.png", width = 7, height = 7)
-
-ggplot2::ggplot(
-  t, ggplot2::aes(x = genotype_concordance, y = r_squared, color = model_id, shape = pheno_model_id)
-) + ggplot2::geom_point(size = 10) +
+  t_r_squareds_in_time,
+  ggplot2::aes(x = epoch, y = r_squared, color = genetic_data)
+) + ggplot2::geom_line(size = 1) +
   ggplot2::scale_y_continuous(limits = c(0, 1)) +
-  ggplot2::facet_grid(window_kb ~ .) +
-  ggplot2::labs(
-    title = "Genotype concordance versus R squared per SNP selection window",
-    caption = paste0(
-      "Rows are the SNP selection window centered around rs4819959, ",
-      "the main hit of IL-17RA (panel CVD3_105_IL-17RA)"
-    )
+  ggplot2::scale_x_continuous(breaks = seq(0, 1000, by = 200)) +
+  ggplot2::facet_grid(model_id ~ pheno_model_id) +
+  gcaer::get_gcaer_theme() +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),
+    panel.border = ggplot2::element_rect(colour = "black", fill = "transparent")
   )
-ggplot2::ggsave(filename = "genotype_concordance_to_r_squared_per_model_combination.png", width = 7, height = 7)
-
-knitr::kable(t[order(t$genotype_concordance, decreasing = TRUE), ])
-knitr::kable(t[order(t$nmse), ])
-knitr::kable(t[order(t$r_squared, decreasing = TRUE), ])
-
-knitr::kable(t |> dplyr::filter(model_id == "M1" & pheno_model_id == "p1"))
-
+ggplot2::ggsave(filename = "issue_42_r_squareds_in_time.png", width = 7, height = 7)
