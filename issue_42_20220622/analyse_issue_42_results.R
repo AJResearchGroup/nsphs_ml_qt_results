@@ -228,7 +228,7 @@ ggplot2::ggplot(
   t_last_nmses_in_time,
   ggplot2::aes(x = 1, y = nmse, fill = genetic_data)
 ) + ggplot2::geom_boxplot() +
-  ggplot2::scale_x_continuous(name = "") +
+  ggplot2::scale_x_discrete(name = "", drop = FALSE) +
   ggplot2::scale_y_continuous(limits = c(0, 2), oob = scales::squish) +
   ggplot2::facet_grid(model_id ~ pheno_model_id) +
   gcaer::get_gcaer_theme() +
@@ -266,7 +266,7 @@ ggplot2::ggplot(
   t_last_r_squareds_in_time,
   ggplot2::aes(x = 1, y = r_squared, fill = genetic_data)
 ) + ggplot2::geom_boxplot() +
-  ggplot2::scale_x_continuous(name = "") +
+  ggplot2::scale_x_discrete(name = "", drop = FALSE) +
   ggplot2::scale_y_continuous(limits = c(0, 1)) +
   ggplot2::facet_grid(model_id ~ pheno_model_id) +
   gcaer::get_gcaer_theme() +
