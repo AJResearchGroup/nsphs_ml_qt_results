@@ -186,3 +186,46 @@ ggplot2::ggplot(
     panel.border = ggplot2::element_rect(colour = "black", fill = "transparent")
   )
 ggplot2::ggsave(filename = "issue_42_r_squareds_in_time.png", width = 7, height = 7)
+
+
+
+#############################################################################
+# last r_squared in time
+#############################################################################
+all_epochs <- sort(unique(t_r_squareds_in_time$epoch))
+top_epochs <- all_epochs[all_epochs > max(all_epochs) * 0.89]
+
+t_last_r_squareds_in_time <- dplyr::filter(
+  t_r_squareds_in_time,
+  epoch %in% top_epochs
+)
+
+if ("calculate averages" == "myself") {
+  t_average_last_r_squareds_in_time <- dplyr::summarise(
+    dplyr::group_by(
+      t_last_r_squareds_in_time,
+      model_id, pheno_model_id, genetic_data
+    ),
+    average_last_r_squared = mean(r_squared),
+    .groups = "drop"
+  )
+}
+
+t_last_r_squareds_in_time$genetic_data <- as.factor(t_last_r_squareds_in_time$genetic_data)
+ggplot2::ggplot(
+  t_last_r_squareds_in_time,
+  ggplot2::aes(x = 1, y = r_squared, fill = genetic_data)
+) + ggplot2::geom_boxplot() +
+  ggplot2::scale_x_continuous(name = "") +
+  ggplot2::scale_y_continuous(limits = c(0, 1)) +
+  ggplot2::facet_grid(model_id ~ pheno_model_id) +
+  gcaer::get_gcaer_theme() +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_blank(),
+    panel.border = ggplot2::element_rect(colour = "black", fill = "transparent"),
+    legend.position = "bottom"
+  ) + ggplot2::labs(
+    title = "Last 10% of all r_squareds\nper architecture"
+  )
+
+ggplot2::ggsave(filename = "issue_42_r_squareds_at_end.png", width = 7, height = 7)
