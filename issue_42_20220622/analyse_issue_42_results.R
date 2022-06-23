@@ -53,6 +53,10 @@ t_combinations$log_filename_25 <- paste0(
 )
 t_combinations$folder_exists <- dir.exists(t_combinations$folder_name)
 t_combinations$log_filename_25_exists <- file.exists(t_combinations$log_filename_25)
+
+# To re-run:
+t_combinations[!t_combinations$folder_exists | !t_combinations$log_filename_25_exists, ]
+
 #############################################################################
 # Explore when dir does not exist, but log file does
 #############################################################################
@@ -250,17 +254,6 @@ t_last_r_squareds_in_time <- dplyr::filter(
   epoch %in% top_epochs
 )
 
-if ("calculate averages" == "myself") {
-  t_average_last_r_squareds_in_time <- dplyr::summarise(
-    dplyr::group_by(
-      t_last_r_squareds_in_time,
-      model_id, pheno_model_id, genetic_data
-    ),
-    average_last_r_squared = mean(r_squared),
-    .groups = "drop"
-  )
-}
-
 t_last_r_squareds_in_time$genetic_data <- as.factor(t_last_r_squareds_in_time$genetic_data)
 ggplot2::ggplot(
   t_last_r_squareds_in_time,
@@ -276,3 +269,78 @@ ggplot2::ggplot(
   )
 
 ggplot2::ggsave(filename = "issue_42_r_squareds_at_end.png", width = 7, height = 7)
+
+#############################################################################
+# get the top averages for each
+#############################################################################
+t_average_last_genotype_concordance_in_time <- dplyr::summarise(
+  dplyr::group_by(
+    t_last_genotype_concordances_in_time,
+    model_id, pheno_model_id, genetic_data
+  ),
+  average_last_genotype_concordance = mean(genotype_concordance),
+  .groups = "drop"
+)
+top_10_gc <- head(
+  t_average_last_genotype_concordance_in_time[order(t_average_last_genotype_concordance_in_time$average_last_genotype_concordance, decreasing = TRUE),  ],
+  n = 10
+)
+
+top_10_gc_tex <- print(
+  xtable::xtable(
+    top_10_gc,
+    label = "tab:top_10_gc",
+    caption = "Top 10 models with the highest average genotype concordance"
+  ),
+  include.colnames = TRUE
+)
+writeLines(top_10_gc_tex, "~/issue_42_top_10_gc.tex")
+
+t_average_last_nmse_in_time <- dplyr::summarise(
+  dplyr::group_by(
+    t_last_nmses_in_time,
+    model_id, pheno_model_id, genetic_data
+  ),
+  average_last_nmse = mean(nmse),
+  .groups = "drop"
+)
+
+top_10_nmse <- head(
+  t_average_last_nmse_in_time[order(t_average_last_nmse_in_time$average_last_nmse, decreasing = FALSE),  ],
+  n = 10
+)
+
+top_10_nmse_tex <- print(
+  xtable::xtable(
+    top_10_nmse,
+    label = "tab:top_10_nmse",
+    caption = "Top 10 models with the lowest normalized mean squared error"
+  ),
+  include.colnames = TRUE
+)
+writeLines(top_10_nmse_tex, "~/issue_42_top_10_nmse.tex")
+
+
+t_average_last_r_squareds_in_time <- dplyr::summarise(
+  dplyr::group_by(
+    t_last_r_squareds_in_time,
+    model_id, pheno_model_id, genetic_data
+  ),
+  average_last_r_squared = mean(r_squared),
+  .groups = "drop"
+)
+
+top_10_rs <- head(
+  t_average_last_r_squareds_in_time[order(t_average_last_r_squareds_in_time$average_last_r_squared, decreasing = TRUE),  ],
+  n = 10
+)
+
+top_10_rs_tex <- print(
+  xtable::xtable(
+    top_10_rs,
+    label = "tab:top_10_rs",
+    caption = "Top 10 models with the heighest r squared"
+  ),
+  include.colnames = TRUE
+)
+writeLines(top_10_rs_tex, "~/issue_42_top_10_rs.tex")
