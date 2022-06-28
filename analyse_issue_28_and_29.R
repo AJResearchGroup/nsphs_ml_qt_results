@@ -39,7 +39,7 @@ if (nchar("analysis_about_nsme")) {
     )
     matches <- stringr::str_match(
       nmse_in_time_filename,
-      "issue_([[:digit:]]{2})_1000_epochs_p([[:digit:]]{1})/data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
+      "issue_([[:digit:]]{2})_1000_epochs_p([[:digit:]]{1})_m3d/data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
     )
     testthat::expect_true(!is.na(matches)[1][1])
     testthat::expect_equal(matches[1, 2], matches[1, 4])
@@ -53,7 +53,7 @@ if (nchar("analysis_about_nsme")) {
   nmse_in_times_table$n_markers <- as.factor(nmse_in_times_table$n_markers)
   nmse_in_times_table$window_kb <- as.factor(nmse_in_times_table$window_kb)
 
-  for (phenotype_model_index in c(0, 1)) {
+  for (phenotype_model_index in c(1)) {
     p <- ggplot2::ggplot(
       data = dplyr::filter(nmse_in_times_table, phenotype_model == phenotype_model_index),
       ggplot2::aes(x = epoch, y = nmse, color = window_kb, lty = n_markers)
@@ -100,7 +100,7 @@ if (nchar("analysis_about_genotype_concordances")) {
     )
     matches <- stringr::str_match(
       genotype_concordances_filename,
-      "issue_([[:digit:]]{2})_1000_epochs_p([[:digit:]]{1})/data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
+      "issue_([[:digit:]]{2})_1000_epochs_p([[:digit:]]{1}).*/data_issue_([[:digit:]]{2})_([[:digit:]]{1,4})_ae"
     )
     testthat::expect_true(!is.na(matches)[1][1])
     testthat::expect_equal(matches[1, 2], matches[1, 4])
@@ -114,7 +114,7 @@ if (nchar("analysis_about_genotype_concordances")) {
   genotype_concordancess_table$n_markers <- as.factor(genotype_concordancess_table$n_markers)
   genotype_concordancess_table$window_kb <- as.factor(genotype_concordancess_table$window_kb)
 
-  for (phenotype_model_index in c(0, 1)) {
+  for (phenotype_model_index in c(1)) {
     p <- ggplot2::ggplot(
       data = dplyr::filter(genotype_concordancess_table, phenotype_model == phenotype_model_index),
       ggplot2::aes(x = epoch, y = genotype_concordance, color = window_kb, lty = n_markers)
