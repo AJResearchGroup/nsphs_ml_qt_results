@@ -1,14 +1,19 @@
 #############################################################################
 # General setup
 #############################################################################
+path <- "~/GitHubs/nsphs_ml_qt_results/issue_42_20220622/"
+
 all_root_folders <- list.dirs(
-  path = "~/GitHubs/nsphs_ml_qt_results/issue_42_20220622/",
+  path = path,
   recursive = FALSE
 )
-all_folders <- list.dirs(recursive = TRUE)
+all_folders <- list.dirs(
+  path = path,
+  recursive = TRUE
+)
 
 successful_root_folders <- sort(unique(dirname(dirname(stringr::str_subset(all_folders, "pheno_weights")))))
-testthat::expect_equal(29, length(successful_root_folders))
+testthat::expect_equal(32, length(successful_root_folders))
 
 matches <- stringr::str_match(successful_root_folders, "_(M.*)_(p.)_(1.*)_ae")
 model_ids_that_work <- unique(sort(matches[, 2]))
@@ -37,6 +42,30 @@ testthat::expect_true(stringr::str_detect(window_kb_to_data(10), "4 associations
 testthat::expect_true(stringr::str_detect(window_kb_to_data(100), "5 associations")) #nolint indeed a long line
 testthat::expect_true(stringr::str_detect(window_kb_to_data(1000), "6 associations")) #nolint indeed a long line
 
+window_kbs_to_data <- function(window_kbs) {
+  # LUT = Look Up Table
+  t_lut <- tibble::tibble(
+    window_kb = unique(window_kbs)
+  )
+  t_lut$n_associations <- Vectorize(window_kb_to_data)(t_lut$window_kb)
+  t <- tibble::tibble(window_kb = window_kbs)
+  t_merged <- dplyr::left_join(t, t_lut, by = "window_kb")
+  testthat::expect_true(identical(t$window_kb, t_merged$window_kb))
+  testthat::expect_equal(length(window_kbs), length(t_merged$n_associations))
+  t_merged$n_associations
+}
+
+one_kb <- window_kb_to_data(1)
+ten_kb <- window_kb_to_data(10)
+hundred_kb <- window_kb_to_data(100)
+thousand_kb <- window_kb_to_data(1000)
+window_kbs <- rep(c(1, 10, 100, 1000), each = 3, times = 2)
+data <- rep(c(one_kb, ten_kb, hundred_kb, thousand_kb), each = 3, times = 2)
+testthat::expect_equal(
+  window_kbs_to_data(window_kbs),
+  data
+)
+
 #############################################################################
 # Get all combinations
 #############################################################################
@@ -45,16 +74,25 @@ t_combinations <- tidyr::expand_grid(
   pheno_model_id = pheno_model_ids_that_work,
   window_kb = window_kbs_that_work
 )
-t_combinations$folder_name <- paste0(
+t_combinations$window_kb <- as.numeric(t_combinations$window_kb)
+t_combinations$folder_name <- file.path(
+  path,
+  paste0(
     "data_issue_42_", t_combinations$model_id,
     "_", t_combinations$pheno_model_id, "_", t_combinations$window_kb,
     "_ae"
+  )
 )
-t_combinations$log_filename_25 <- paste0(
-  "25_run_issue_42_", t_combinations$model_id,
-  "_", t_combinations$pheno_model_id, "_", t_combinations$window_kb,
-  ".log"
+
+t_combinations$log_filename_25 <- file.path(
+  path,
+  paste0(
+    "25_run_issue_42_", t_combinations$model_id,
+    "_", t_combinations$pheno_model_id, "_", t_combinations$window_kb,
+    ".log"
+  )
 )
+dir.exists("~/GitHubs/nsphs_ml_qt_results/issue_42_20220622//data_issue_42_M1_p1_100_ae")
 t_combinations$folder_exists <- dir.exists(t_combinations$folder_name)
 t_combinations$log_filename_25_exists <- file.exists(t_combinations$log_filename_25)
 
@@ -77,6 +115,7 @@ if ("caused by" == "concurrency") {
 genotype_concordance_in_time_list <- list()
 for (i in seq_len(nrow(t_combinations))) {
   this_row <- t_combinations[i, ]
+  testthat::expect_true(is.numeric(this_row$window_kb))
   filename <- file.path(
     this_row$folder_name,
     "genotype_concordances.csv"
@@ -95,8 +134,10 @@ for (i in seq_len(nrow(t_combinations))) {
 }
 t_genotype_concordances_in_time <- dplyr::bind_rows(genotype_concordance_in_time_list)
 
+t_genotype_concordances_in_time$genetic_data <- window_kbs_to_data(t_genotype_concordances_in_time$window_kb)
 
-t_genotype_concordances_in_time$genetic_data <- Vectorize(window_kb_to_data)(t_genotype_concordances_in_time$window_kb)
+dplyr::distinct(dplyr::select(t_genotype_concordances_in_time, window_kb, genetic_data))
+#dplyr::select(t_genotype_concordances_in_time, model_id, pheno_model_id, )
 
 ggplot2::ggplot(
   t_genotype_concordances_in_time,
@@ -136,7 +177,7 @@ for (i in seq_len(nrow(t_combinations))) {
 }
 t_nmses_in_time <- dplyr::bind_rows(nmse_in_time_list)
 
-t_nmses_in_time$genetic_data <- Vectorize(window_kb_to_data)(t_nmses_in_time$window_kb)
+t_nmses_in_time$genetic_data <- window_kbs_to_data(t_nmses_in_time$window_kb)
 
 ggplot2::ggplot(
   t_nmses_in_time,
@@ -177,7 +218,7 @@ for (i in seq_len(nrow(t_combinations))) {
 }
 t_r_squareds_in_time <- dplyr::bind_rows(r_squared_in_time_list)
 
-t_r_squareds_in_time$genetic_data <- Vectorize(window_kb_to_data)(t_r_squareds_in_time$window_kb)
+t_r_squareds_in_time$genetic_data <- window_kbs_to_data(t_r_squareds_in_time$window_kb)
 
 ggplot2::ggplot(
   t_r_squareds_in_time,
