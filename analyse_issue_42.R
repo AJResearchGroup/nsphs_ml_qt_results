@@ -23,18 +23,19 @@ testthat::expect_equal(4, length(window_kbs_that_work))
 #############################################################################
 # Helper functions
 #############################################################################
+
 window_kb_to_data <- function(window_kb) {
-  if (window_kb == 1) return("1 kb, 2 SNPs")
-  if (window_kb == 10) return("10 kb, 5 SNPs")
-  if (window_kb == 100) return("100 kb, 5 SNPs")
-  if (window_kb == 1000) return("1000 kb, 6 SNPs")
-  stop("Unknown 'window_kb': ", window_kb)
+  n_associations <- nsphsmlqt::window_kb_to_n_associations(
+    protein_name = "IL-17RA",
+    window_kb = window_kb
+  )
+  paste0(window_kb, " kb, ", n_associations, " associations")
 }
 
-testthat::expect_true(stringr::str_detect(window_kb_to_data(1), "2 SNPs"))
-testthat::expect_true(stringr::str_detect(window_kb_to_data(10), "5 SNPs"))
-testthat::expect_true(stringr::str_detect(window_kb_to_data(100), "5 SNPs"))
-testthat::expect_true(stringr::str_detect(window_kb_to_data(1000), "6 SNPs"))
+testthat::expect_true(stringr::str_detect(window_kb_to_data(1), "2 associations")) #nolint indeed a long line
+testthat::expect_true(stringr::str_detect(window_kb_to_data(10), "4 associations")) #nolint indeed a long line
+testthat::expect_true(stringr::str_detect(window_kb_to_data(100), "5 associations")) #nolint indeed a long line
+testthat::expect_true(stringr::str_detect(window_kb_to_data(1000), "6 associations")) #nolint indeed a long line
 
 #############################################################################
 # Get all combinations
